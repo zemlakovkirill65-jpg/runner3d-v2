@@ -45,7 +45,7 @@ jobs:
           org.gradle.jvmargs=-Xmx2048m
           EOF
 
-          cat << 'EOF' > app/build.gradle
+          cat << 'EOF' > build.gradle
           plugins {
             id 'com.android.application' version '8.1.4' apply false
           }
@@ -53,15 +53,15 @@ jobs:
 
           cat << 'EOF' > app/build.gradle
           plugins {
-            id 'com.android.application' version '8.1.4'
+            id 'com.android.application'
           }
           android {
             namespace "com.runner3d.app"
-            compileSdk 33
+            compileSdk 34
             defaultConfig {
               applicationId "com.runner3d.app"
               minSdk 21
-              targetSdk 33
+              targetSdk 34
               versionCode 1
               versionName "1.0"
             }
@@ -121,9 +121,9 @@ jobs:
           }
           EOF
 
-          gradle wrapper --gradle-version 8.1.1
+          gradle wrapper --gradle-version 8.1.1 --warning-mode none
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --warning-mode none
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
