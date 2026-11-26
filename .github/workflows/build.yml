@@ -16,7 +16,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Create WebView Android project
+      - name: Create and Build Project
         run: |
           mkdir -p app/src/main/java/com/runner3d/app app/src/main/res/layout app/src/main/assets
           if [ -f index.html ]; then cp index.html app/src/main/assets/index.html; else echo "<html><body><h1>Game</h1></body></html>" > app/src/main/assets/index.html; fi
@@ -101,10 +101,12 @@ jobs:
           }
           EOF
 
+          gradle wrapper --gradle-version 8.1
+          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Runner3D-apk
+          name: Runner3D-final-apk
           path: app/build/outputs/apk/debug/app-debug.apk
