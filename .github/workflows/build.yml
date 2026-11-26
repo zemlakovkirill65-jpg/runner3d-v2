@@ -1,0 +1,138 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Create WebView Android project
+        run: |
+          mkdir -p app/src/main/java/com/runner3d/app app/src/main/res/layout app/src/main/assets
+          cp index.html app/src/main/assets/index.html
+
+          cat << 'EOF' > settings.gradle
+          rootProject.name = "Runner3d"
+          include ':app'
+          EOF
+
+          cat << 'EOF' > build.gradle
+          buildscript {
+            repositories {
+              google()
+              mavenCentral()
+            }
+            dependencies {
+              classpath 'com.android.tools.build:gradle:8.2.2'
+            }
+          }
+          allprojects {
+            repositories {
+              google()
+              mavenCentral()
+            }
+          }
+          EOF
+
+          cat << 'EOF' > gradle.properties
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2048m
+          EOF
+
+          cat << 'EOF' > app/build.gradle
+          plugins {
+            id 'com.android.application'
+          }
+          android {
+            namespace "com.runner3d.app"
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.runner3d.app"
+              minSdk 21
+              targetSdk 34
+              versionCode 1
+              versionName "1.0"
+            }
+            buildTypes {
+              release {
+                minifyEnabled false
+              }
+            }
+          }
+          dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <application
+              android:label="Runner3D"
+              android:usesCleartextTraffic="true"
+              android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+              <activity
+                android:name=".MainActivity"
+                android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN" />
+                  <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/layout/activity_main.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/webview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+          EOF
+
+          cat << 'EOF' > app/src/main/java/com/runner3d/app/MainActivity.java
+          package com.runner3d.app;
+
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              setContentView(R.layout.activity_main);
+              WebView webView = findViewById(R.id.webview);
+              WebSettings settings = webView.getSettings();
+              settings.setJavaScriptEnabled(true);
+              settings.setDomStorageEnabled(true);
+              webView.setWebViewClient(new WebViewClient());
+              webView.loadUrl("file:///android_asset/index.html");
+            }
+          }
+          EOF
+
+          gradle wrapper --gradle-version 8.4 --distribution-type bin
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Runner3D-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
