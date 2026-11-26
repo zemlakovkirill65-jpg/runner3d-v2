@@ -22,6 +22,20 @@ jobs:
           if [ -f index.html ]; then cp index.html app/src/main/assets/index.html; else echo "<html><body><h1>Game</h1></body></html>" > app/src/main/assets/index.html; fi
 
           cat << 'EOF' > settings.gradle
+          pluginManagement {
+            repositories {
+              google()
+              mavenCentral()
+              gradlePluginPortal()
+            }
+          }
+          dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+              google()
+              mavenCentral()
+            }
+          }
           rootProject.name = "Runner3d"
           include ':app'
           EOF
@@ -33,7 +47,13 @@ jobs:
 
           cat << 'EOF' > app/build.gradle
           plugins {
-            id 'com.android.application'
+            id 'com.android.application' version '8.1.4' apply false
+          }
+          EOF
+
+          cat << 'EOF' > app/build.gradle
+          plugins {
+            id 'com.android.application' version '8.1.4'
           }
           android {
             namespace "com.runner3d.app"
@@ -101,7 +121,7 @@ jobs:
           }
           EOF
 
-          gradle wrapper --gradle-version 8.1
+          gradle wrapper --gradle-version 8.1.1
           chmod +x gradlew
           ./gradlew assembleDebug
 
