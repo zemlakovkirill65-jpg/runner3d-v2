@@ -16,12 +16,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
       - name: Create WebView Android project
         run: |
           mkdir -p app/src/main/java/com/runner3d/app app/src/main/res/layout app/src/main/assets
-          cp index.html app/src/main/assets/index.html
+          if [ -f index.html ]; then cp index.html app/src/main/assets/index.html; else echo "<html><body><h1>Game</h1></body></html>" > app/src/main/assets/index.html; fi
 
           cat << 'EOF' > settings.gradle
           rootProject.name = "Runner3d"
@@ -35,7 +33,7 @@ jobs:
               mavenCentral()
             }
             dependencies {
-              classpath 'com.android.tools.build:gradle:8.2.2'
+              classpath 'com.android.tools.build:gradle:8.1.0'
             }
           }
           allprojects {
@@ -57,18 +55,13 @@ jobs:
           }
           android {
             namespace "com.runner3d.app"
-            compileSdk 34
+            compileSdk 33
             defaultConfig {
               applicationId "com.runner3d.app"
               minSdk 21
-              targetSdk 34
+              targetSdk 33
               versionCode 1
               versionName "1.0"
-            }
-            buildTypes {
-              release {
-                minifyEnabled false
-              }
             }
           }
           dependencies {
@@ -127,12 +120,11 @@ jobs:
           }
           EOF
 
-          gradle wrapper --gradle-version 8.4 --distribution-type bin
-          chmod +x gradlew
+          chmod +x gradlew || gradle wrapper --gradle-version 8.1
           ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Runner3D-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Runner3D-apk
+          target: app/build/outputs/apk/debug/app-debug.apk
